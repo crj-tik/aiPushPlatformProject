@@ -1,0 +1,25 @@
+# src/test/resources/application-test.yml
+spring:
+  application:
+    name: gateway-service-test
+  
+  cloud:
+    nacos:
+      discovery:
+        server-addr: localhost:8848
+        enabled: false  # 测试时禁用服务注册
+    gateway:
+      enabled: true
+      routes:
+        - id: test-route
+          uri: http://localhost:8081
+          predicates:
+            - Path=/test/**
+
+server:
+  port: 0  # 随机端口
+
+logging:
+  level:
+    com.tik: DEBUG
+    org.springframework.cloud.gateway: DEBUG

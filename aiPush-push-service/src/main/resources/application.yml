@@ -1,0 +1,94 @@
+spring:
+  ai:
+    # 向量存储配置 - Milvus Lite
+    vectorstore:
+      milvus:
+        client:
+          host: localhost
+          port: 19530
+        database: default
+        collection: vector_store
+        embedding-dimension: 1536
+        index-type: IVF_FLAT
+        metric-type: COSINE
+        # Milvus Lite 会在当前目录生成 milvus.db 文件
+
+    # Embedding 模型配置（统一在这里配置）
+    embedding:
+      options:
+        model: deepseek-embedding  # 或 text-embedding-ada-002
+        dimensions: 1536
+
+    # 可选：配置重试和超时
+    retry:
+      max-attempts: 3
+      backoff:
+        initial-interval: 1000
+        multiplier: 2
+  application:
+    name: aiPush-push-service
+  profiles:
+    active: dev
+  datasource:
+    url: jdbc:mysql://localhost:3306/smart_push?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    username: root
+    password: root123456
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      connection-test-query: SELECT 1  # MySQL健康检查
+      minimum-idle: 5
+      maximum-pool-size: 20
+      connection-timeout: 30000
+  cloud:
+    nacos:
+      discovery:
+        server-addr: localhost:8848
+        namespace: public
+        group: DEFAULT_GROUP
+      config:
+        server-addr: localhost:8848
+        file-extension: yaml
+        namespace: public
+        group: DEFAULT_GROUP
+        refresh-enabled: true
+
+mybatis:
+  mapper-locations: classpath:mapper/*.xml
+  type-aliases-package: com.example.entity
+  configuration:
+    map-underscore-to-camel-case: true
+    cache-enabled: true
+    lazy-loading-enabled: false
+    jdbc-type-for-null: NULL
+
+webhook:
+  wechat: ${WECHAT_WEBHOOK:https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=default}
+  feishu: ${FEISHU_WEBHOOK:https://open.feishu.cn/open-apis/bot/v2/hook/default}
+  dingtalk: ${DINGTALK_WEBHOOK:https://oapi.dingtalk.com/robot/send?access_token=default}
+
+ai:
+  openai:
+    api-key: ${OPENAI_API_KEY:sk-default}
+    base-url: https://api.openai.com/v1
+    chat:
+      model: gpt-3.5-turbo
+      temperature: 0.7
+      max-tokens: 1000
+
+vector:
+  top-k: 5
+  min-score: 0.6
+  dimensions: 1536
+
+logging:
+  level:
+    com.example: DEBUG
+    com.example.mapper: DEBUG
+
+# RestTemplate 配置
+rest:
+  template:
+    connect-timeout: 5000      # 连接超时 5秒
+    read-timeout: 30000         # 读取超时 30秒
+    max-connections: 100        # 最大连接数
+    max-per-route: 20           # 每路由最大连接数

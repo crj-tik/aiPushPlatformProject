@@ -1,0 +1,42 @@
+server:
+  port: 8082
+
+# 服务元数据
+info:
+  app:
+    name: ${spring.application.name}
+    version: 1.0.0
+    description: 人员预警服务
+
+# Feign 配置
+feign:
+  client:
+    config:
+      default:
+        connectTimeout: 5000
+        readTimeout: 5000
+        loggerLevel: basic
+  circuitbreaker:
+    enabled: true
+
+# 日志配置
+logging:
+  level:
+    com.example.warning: debug
+    com.example.warning.feign: debug
+    com.alibaba.cloud.ai: debug
+    com.alibaba.nacos: info
+
+# 健康检查
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+
+pagehelper:
+  helper-dialect: mysql  # 数据库方言
+  reasonable: true            # 分页合理化（页码<=0 时查询第一页，页码>总页数时查询最后一页）
+  support-methods-arguments: true  # 支持通过 Mapper 接口参数传递分页参数
+  params: count=countSql       # 从参数中获取 count 查询的 SQL
+  auto-runtime-dialect: true   # 自动识别数据库方言（多数据源时建议开启）

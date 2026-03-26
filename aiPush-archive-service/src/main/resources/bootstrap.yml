@@ -1,0 +1,41 @@
+spring:
+  application:
+    name: aiPush-archive-service
+
+  cloud:
+    nacos:
+      # Nacos 服务发现
+      discovery:
+        server-addr: 127.0.0.1:8848
+        namespace: public
+        group: DEFAULT_GROUP
+        username: nacos
+        password: nacos
+        metadata:
+          version: v1
+          module: archive
+
+      # Nacos 配置中心
+      config:
+        server-addr: 127.0.0.1:8848
+        namespace: public
+        group: DEFAULT_GROUP
+        file-extension: yaml
+        username: nacos
+        password: nacos
+        refresh-enabled: true
+
+        # 扩展配置
+        extension-configs:
+          - data-id: datasource.yaml
+            group: DEFAULT_GROUP
+            refresh: true
+          - data-id: mybatis.yaml
+            group: DEFAULT_GROUP
+            refresh: true
+
+        # 共享配置
+        shared-configs:
+          - data-id: common.yaml
+            group: DEFAULT_GROUP
+            refresh: true

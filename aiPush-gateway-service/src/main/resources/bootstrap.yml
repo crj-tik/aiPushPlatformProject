@@ -1,0 +1,29 @@
+spring:
+  application:
+    name: gateway-service
+
+  cloud:
+    nacos:
+      # Nacos 服务发现配置
+      discovery:
+        server-addr: 127.0.0.1:8848
+        namespace: public
+        group: DEFAULT_GROUP
+        username: nacos
+        password: nacos
+
+      # Nacos 配置中心配置
+      config:
+        server-addr: 127.0.0.1:8848
+        namespace: public
+        group: DEFAULT_GROUP
+        file-extension: yaml
+        username: nacos
+        password: nacos
+        refresh-enabled: true
+
+        # 共享配置（所有服务共享的配置）
+        shared-configs:
+          - data-id: common.yaml
+            group: DEFAULT_GROUP
+            refresh: true

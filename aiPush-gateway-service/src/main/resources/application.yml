@@ -1,0 +1,42 @@
+server:
+  port: 8080
+
+# 网关路由配置
+spring:
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true  # 启用服务发现路由
+          lower-case-service-id: true
+
+      routes:
+        # 档案服务路由
+        - id: archive-service
+          uri: lb://aiPush-archive-service
+          predicates:
+            - Path=/archive/**
+          filters:
+            - StripPrefix=1
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 20
+
+        # 预警服务路由
+        - id: warning-service
+          uri: lb://aiPush-warnning-service
+          predicates:
+            - Path=/warning/**
+          filters:
+            - StripPrefix=1
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 20
+
+# 日志配置
+logging:
+  level:
+    org.springframework.cloud.gateway: debug
+    com.alibaba.nacos: info

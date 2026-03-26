@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.archive.mapper.PersonMapper">
+
+    <resultMap id="BaseResultMap" type="com.tik.aipusharchiveservice.mapper.PersonMapper">
+        <id property="id" column="id" jdbcType="BIGINT"/>
+        <result property="name" column="name" jdbcType="VARCHAR"/>
+        <result property="idCard" column="id_card" jdbcType="VARCHAR"/>
+        <result property="department" column="department" jdbcType="VARCHAR"/>
+        <result property="position" column="position" jdbcType="VARCHAR"/>
+        <result property="phone" column="phone" jdbcType="VARCHAR"/>
+        <result property="email" column="email" jdbcType="VARCHAR"/>
+        <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+        <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, name, id_card, department, position, phone, email, create_time, update_time
+    </sql>
+
+    <insert id="insert" parameterType="com.tik.aipusharchiveservice.mapper.PersonMapper" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO persons (
+            name, id_card, department, position, phone, email, create_time, update_time
+        ) VALUES (
+                     #{name}, #{idCard}, #{department}, #{position}, #{phone}, #{email},
+                     #{createTime}, #{updateTime}
+                 )
+    </insert>
+
+    <insert id="batchInsert" parameterType="list">
+        INSERT INTO persons (
+        name, id_card, department, position, phone, email, create_time, update_time
+        ) VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.name}, #{item.idCard}, #{item.department}, #{item.position},
+            #{item.phone}, #{item.email}, #{item.createTime}, #{item.updateTime})
+        </foreach>
+    </insert>
+
+    <update id="updateById" parameterType="com.tik.aipusharchiveservice.mapper.PersonMapper">
+        UPDATE persons
+        <set>
+            <if test="name != null">name = #{name},</if>
+            <if test="idCard != null">id_card = #{idCard},</if>
+            <if test="department != null">department = #{department},</if>
+            <if test="position != null">position = #{position},</if>
+            <if test="phone != null">phone = #{phone},</if>
+            <if test="email != null">email = #{email},</if>
+            update_time = #{updateTime}
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM persons WHERE id = #{id}
+    </delete>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM persons
+        WHERE id = #{id}
+    </select>
+
+    <select id="selectAll" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM persons
+        ORDER BY id DESC
+    </select>
+
+    <select id="selectByCondition" parameterType="com.tik.aipusharchiveservice.mapper.PersonMapper" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM persons
+        <where>
+            <if test="name != null and name != ''">
+                AND name LIKE CONCAT('%', #{name}, '%')
+            </if>
+            <if test="department != null and department != ''">
+                AND department = #{department}
+            </if>
+            <if test="position != null and position != ''">
+                AND position = #{position}
+            </if>
+            <if test="idCard != null and idCard != ''">
+                AND id_card = #{idCard}
+            </if>
+        </where>
+        ORDER BY id DESC
+    </select>
+
+    <select id="selectByDepartment" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM persons
+        WHERE department = #{department}
+        ORDER BY id DESC
+    </select>
+
+    <select id="count" resultType="long">
+        SELECT COUNT(*) FROM persons
+    </select>
+</mapper>

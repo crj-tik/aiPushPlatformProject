@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tik.aipushwarningservice.mapper.MonitorMapper">
+
+    <!-- 结果映射 -->
+    <resultMap id="BaseResultMap" type="com.tik.aipushwarningservice.mapper.MonitorMapper">
+        <id property="id" column="id" jdbcType="BIGINT"/>
+        <result property="personId" column="person_id" jdbcType="BIGINT"/>
+        <result property="personName" column="person_name" jdbcType="VARCHAR"/>
+        <result property="personIdCard" column="person_id_card" jdbcType="VARCHAR"/>
+        <result property="department" column="department" jdbcType="VARCHAR"/>
+        <result property="position" column="position" jdbcType="VARCHAR"/>
+        <result property="analysisType" column="analysis_type" jdbcType="VARCHAR"/>
+        <result property="analysisContent" column="analysis_content" jdbcType="VARCHAR"/>
+        <result property="analysisResult" column="analysis_result" jdbcType="VARCHAR"/>
+        <result property="riskLevel" column="risk_level" jdbcType="VARCHAR"/>
+        <result property="riskScore" column="risk_score" jdbcType="INTEGER"/>
+        <result property="suggestions" column="suggestions" jdbcType="VARCHAR"/>
+        <result property="aiModel" column="ai_model" jdbcType="VARCHAR"/>
+        <result property="promptTokens" column="prompt_tokens" jdbcType="INTEGER"/>
+        <result property="completionTokens" column="completion_tokens" jdbcType="INTEGER"/>
+        <result property="totalTokens" column="total_tokens" jdbcType="INTEGER"/>
+        <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+        <result property="createBy" column="create_by" jdbcType="VARCHAR"/>
+        <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
+        <result property="updateBy" column="update_by" jdbcType="VARCHAR"/>
+        <result property="deleted" column="deleted" jdbcType="INTEGER"/>
+    </resultMap>
+
+    <!-- 基础列 -->
+    <sql id="Base_Column_List">
+        id, person_id, person_name, person_id_card, department, position, 
+        analysis_type, analysis_content, analysis_result, risk_level, risk_score,
+        suggestions, ai_model, prompt_tokens, completion_tokens, total_tokens,
+        create_time, create_by, update_time, update_by, deleted
+    </sql>
+
+    <!-- 插入语句 -->
+    <insert id="insert" parameterType="com.tik.aipushwarningservice.mapper.MonitorMapper"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO monitor_records (
+            person_id, person_name, person_id_card, department, position,
+            analysis_type, analysis_content, analysis_result, risk_level, risk_score,
+            suggestions, ai_model, prompt_tokens, completion_tokens, total_tokens,
+            create_time, create_by, deleted
+        ) VALUES (
+                     #{personId}, #{personName}, #{personIdCard}, #{department}, #{position},
+                     #{analysisType}, #{analysisContent}, #{analysisResult}, #{riskLevel}, #{riskScore},
+                     #{suggestions}, #{aiModel}, #{promptTokens}, #{completionTokens}, #{totalTokens},
+                     #{createTime}, #{createBy}, 0
+                 )
+    </insert>
+
+    <!-- 批量插入 -->
+    <insert id="batchInsert" parameterType="list">
+        INSERT INTO monitor_records (
+        person_id, person_name, person_id_card, department, position,
+        analysis_type, analysis_content, analysis_result, risk_level, risk_score,
+        suggestions, ai_model, prompt_tokens, completion_tokens, total_tokens,
+        create_time, create_by, deleted
+        ) VALUES
+        <foreach collection="list" item="item" separator=",">
+            (
+            #{item.personId}, #{item.personName}, #{item.personIdCard},
+            #{item.department}, #{item.position}, #{item.analysisType},
+            #{item.analysisContent}, #{item.analysisResult}, #{item.riskLevel},
+            #{item.riskScore}, #{item.suggestions}, #{item.aiModel},
+            #{item.promptTokens}, #{item.completionTokens}, #{item.totalTokens},
+            #{item.createTime}, #{item.createBy}, 0
+            )
+        </foreach>
+    </insert>
+
+    <!-- 更新语句 -->
+    <update id="updateById" parameterType="com.tik.aipushwarningservice.mapper.MonitorMapper">
+        UPDATE monitor_records
+        <set>
+            <if test="personName != null">person_name = #{personName},</if>
+            <if test="analysisResult != null">analysis_result = #{analysisResult},</if>
+            <if test="riskLevel != null">risk_level = #{riskLevel},</if>
+            <if test="riskScore != null">risk_score = #{riskScore},</if>
+            <if test="suggestions != null">suggestions = #{suggestions},</if>
+            update_time = #{updateTime},
+            update_by = #{updateBy}
+        </set>
+        WHERE id = #{id} AND deleted = 0
+    </update>
+
+    <!-- 逻辑删除 -->
+    <update id="deleteById">
+        UPDATE monitor_records
+        SET deleted = 1,
+            update_time = NOW(),
+            update_by = #{updateBy}
+        WHERE id = #{id}
+    </update>
+
+    <!-- 物理删除 -->
+    <delete id="physicalDelete">
+        DELETE FROM monitor_records WHERE id = #{id}
+    </delete>
+
+    <!-- 根据ID查询 -->
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM monitor_records
+        WHERE id = #{id} AND deleted = 0
+    </select>
+
+    <!-- 根据人员ID查询 -->
+    <select id="selectByPersonId" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM monitor_records
+        WHERE person_id = #{personId} AND deleted = 0
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 根据风险等级查询 -->
+    <select id="selectByRiskLevel" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM monitor_records
+        WHERE risk_level = #{riskLevel} AND deleted = 0
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 根据部门查询高风险记录 -->
+    <select id="selectHighRiskByDepartment" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM monitor_records
+        WHERE department = #{department}
+        AND risk_level = 'HIGH'
+        AND deleted = 0
+        ORDER BY risk_score DESC, create_time DESC
+        LIMIT 50
+    </select>
+
+    <!-- 条件查询（动态SQL） -->
+    <select id="selectByCondition" parameterType="com.tik.aipushwarningservice.bean.MonitorRecordDTO"
+            resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM monitor_records
+        <where>
+            deleted = 0
+            <if test="personId != null">
+                AND person_id = #{personId}
+            </if>
+            <if test="department != null and department != ''">
+                AND department = #{department}
+            </if>
+            <if test="analysisType != null and analysisType != ''">
+                AND analysis_type = #{analysisType}
+            </if>
+            <if test="riskLevel != null and riskLevel != ''">
+                AND risk_level = #{riskLevel}
+            </if>
+            <if test="startTime != null">
+                AND create_time >= #{startTime}
+            </if>
+            <if test="endTime != null">
+                AND create_time &lt;= #{endTime}
+            </if>
+        </where>
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 统计今日记录数 -->
+    <select id="countTodayRecords" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM monitor_records
+        WHERE DATE(create_time) = CURDATE() AND deleted = 0
+    </select>
+
+    <!-- 统计各风险等级数量 -->
+    <select id="countByRiskLevel" resultType="com.tik.aipushwarningservice.bean.DepartmentRiskStat">
+        SELECT
+            risk_level as riskLevel,
+            COUNT(*) as count
+        FROM monitor_records
+        WHERE deleted = 0
+        GROUP BY risk_level
+    </select>
+
+    <!-- 查询最新高风险记录 -->
+    <select id="selectLatestHighRisk" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM monitor_records
+        WHERE risk_level = 'HIGH' AND deleted = 0
+        ORDER BY create_time DESC
+        LIMIT 10
+    </select>
+
+    <!-- 查询人员最近分析记录 -->
+    <select id="selectRecentByPersonId" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM monitor_records
+        WHERE person_id = #{personId} AND deleted = 0
+        ORDER BY create_time DESC
+        LIMIT #{limit}
+    </select>
+</mapper>
