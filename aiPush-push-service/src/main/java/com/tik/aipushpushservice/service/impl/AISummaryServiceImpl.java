@@ -1,15 +1,18 @@
 package com.tik.aipushpushservice.service.impl;
 
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatOptions;
+import com.alibaba.cloud.ai.dashscope.embedding.DashScopeEmbeddingOptions;
 import com.tik.aipushpushservice.bean.SkillResult;
 import com.tik.aipushpushservice.service.AISummaryService;
 import com.tik.aipushpushservice.utils.JsonUtils;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.embedding.EmbeddingModel;
+import org.springframework.ai.embedding.EmbeddingRequest;
+import org.springframework.ai.embedding.EmbeddingResponse;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
 import java.util.HashMap;
 import java.util.List;
@@ -18,24 +21,26 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class AISummaryServiceImpl implements AISummaryService {
 
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final ChatClient qwenChatClient;
+    private final EmbeddingModel embeddingModel;
 
-    @Value("${ai.openai.api-key}")
-    private String apiKey;
+    @Value("${spring.ai.dashscope.chat.options.model:qwen-plus}")
+    private String chatModel;
 
-    @Value("${ai.openai.base-url}")
-    private String baseUrl;
-
-    @Value("${ai.openai.chat.model}")
-    private String model;
-
-    @Value("${ai.openai.chat.temperature}")
+    @Value("${spring.ai.dashscope.chat.options.temperature:0.7}")
     private Double temperature;
 
-    @Value("${ai.openai.chat.max-tokens}")
+    @Value("${spring.ai.dashscope.chat.options.max-tokens:1000}")
     private Integer maxTokens;
+
+    @Value("${spring.ai.dashscope.embedding.options.model:text-embedding-v4}")
+    private String embeddingModelName;
+
+    @Value("${vector.dimensions:1536}")
+    private Integer embeddingDimensions;
 
     private final Map<String, String> summaryTemplates = Map.of(
             "daily_report", "你是一个数据分析助手。请将以下业务数据整理成一份简洁的日报，包含关键指标、趋势分析和改进建议：\n{data}\n\n参考信息：\n{references}",
@@ -48,42 +53,22 @@ public class AISummaryServiceImpl implements AISummaryService {
     public String summarize(Map<String, Object> data, String summaryType, SkillResult skillResult) {
         try {
             String template = summaryTemplates.getOrDefault(summaryType, summaryTemplates.get("default"));
-
-            // 格式化数据
-            String dataStr = JsonUtils.toJson(data);
-
-            // 格式化参考信息
-            String referencesStr = formatReferences(skillResult);
-
             String prompt = template
-                    .replace("{data}", dataStr)
-                    .replace("{references}", referencesStr);
+                    .replace("{data}", JsonUtils.toJson(data))
+                    .replace("{references}", formatReferences(skillResult));
 
-            // 调用OpenAI API
-            Map<String, Object> request = buildChatRequest(prompt);
+            String content = qwenChatClient.prompt()
+                    .system("你是一个智能助手，请根据用户的问题提供准确、简洁、可执行的回答。")
+                    .user(prompt)
+                    .options(DashScopeChatOptions.builder()
+                            .withModel(chatModel)
+                            .withTemperature(temperature)
+                            .withMaxToken(maxTokens)
+                            .build())
+                    .call()
+                    .content();
 
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            headers.setBearerAuth(apiKey);
-
-            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(request, headers);
-
-            Map<String, Object> response = restTemplate.postForObject(
-                    baseUrl + "/chat/completions",
-                    entity,
-                    Map.class
-            );
-
-            if (response != null && response.containsKey("choices")) {
-                List<Map<String, Object>> choices = (List<Map<String, Object>>) response.get("choices");
-                if (!choices.isEmpty()) {
-                    Map<String, Object> message = (Map<String, Object>) choices.get(0).get("message");
-                    return (String) message.get("content");
-                }
-            }
-
-            return "AI总结失败";
-
+            return content == null ? "AI总结失败" : content;
         } catch (Exception e) {
             log.error("AI总结失败", e);
             return "AI总结失败: " + e.getMessage();
@@ -93,107 +78,54 @@ public class AISummaryServiceImpl implements AISummaryService {
     @Override
     public float[] generateEmbedding(String text) {
         try {
-            Map<String, Object> request = new HashMap<>();
-            request.put("input", text);
-            request.put("model", "text-embedding-ada-002");
-
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            headers.setBearerAuth(apiKey);
-
-            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(request, headers);
-
-            Map<String, Object> response = restTemplate.postForObject(
-                    baseUrl + "/embeddings",
-                    entity,
-                    Map.class
-            );
-
-            if (response != null && response.containsKey("data")) {
-                List<Map<String, Object>> data = (List<Map<String, Object>>) response.get("data");
-                if (!data.isEmpty()) {
-                    List<Double> embeddingList = (List<Double>) data.get(0).get("embedding");
-                    float[] embedding = new float[embeddingList.size()];
-                    for (int i = 0; i < embeddingList.size(); i++) {
-                        embedding[i] = embeddingList.get(i).floatValue();
-                    }
-                    return embedding;
-                }
+            EmbeddingResponse response = embeddingModel.call(new EmbeddingRequest(
+                    List.of(text),
+                    DashScopeEmbeddingOptions.builder()
+                            .withModel(embeddingModelName)
+                            .withDimensions(embeddingDimensions)
+                            .build()
+            ));
+            if (response != null && response.getResult() != null) {
+                return response.getResult().getOutput();
             }
-
         } catch (Exception e) {
             log.error("生成向量失败", e);
         }
-
-        return new float[1536];
+        return new float[embeddingDimensions];
     }
 
     @Override
     public Map<String, Object> extractParams(String text, String type) {
-        String prompt = String.format("""
-            从用户消息中提取参数，返回JSON格式。
-            
-            用户消息：%s
-            参数类型：%s
-            
-            请只返回JSON，不要有其他说明。
-            """, text, type);
-
-        Map<String, Object> request = buildChatRequest(prompt);
-
         try {
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            headers.setBearerAuth(apiKey);
+            String content = qwenChatClient.prompt()
+                    .system("""
+                            你是一个参数提取助手。
+                            你只能输出 JSON 对象。
+                            不要输出 markdown，不要输出代码块，不要输出解释。
+                            """)
+                    .user("""
+                            请从下面的用户消息中提取参数，并返回 JSON。
 
-            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(request, headers);
+                            参数类型：%s
+                            用户消息：%s
+                            """.formatted(type, text))
+                    .options(DashScopeChatOptions.builder()
+                            .withModel(chatModel)
+                            .withTemperature(0.1)
+                            .build())
+                    .call()
+                    .content();
 
-            Map<String, Object> response = restTemplate.postForObject(
-                    baseUrl + "/chat/completions",
-                    entity,
-                    Map.class
-            );
-
-            if (response != null && response.containsKey("choices")) {
-                List<Map<String, Object>> choices = (List<Map<String, Object>>) response.get("choices");
-                if (!choices.isEmpty()) {
-                    Map<String, Object> message = (Map<String, Object>) choices.get(0).get("message");
-                    String content = (String) message.get("content");
-                    return JsonUtils.toMap(content);
-                }
-            }
-
+            Map<String, Object> params = JsonUtils.toMap(content);
+            return params == null ? new HashMap<>() : params;
         } catch (Exception e) {
             log.error("提取参数失败", e);
+            return new HashMap<>();
         }
-
-        return new HashMap<>();
     }
 
-    /**
-     * 构建聊天请求
-     */
-    private Map<String, Object> buildChatRequest(String prompt) {
-        Map<String, Object> request = new HashMap<>();
-        request.put("model", model);
-        request.put("temperature", temperature);
-        request.put("max_tokens", maxTokens);
-
-        List<Map<String, String>> messages = List.of(
-                Map.of("role", "system", "content", "你是一个智能助手，请根据用户的问题提供准确的回答。"),
-                Map.of("role", "user", "content", prompt)
-        );
-
-        request.put("messages", messages);
-
-        return request;
-    }
-
-    /**
-     * 格式化参考信息
-     */
     private String formatReferences(SkillResult skillResult) {
-        if (skillResult == null || skillResult.getReferences() == null) {
+        if (skillResult == null || skillResult.getReferences() == null || skillResult.getReferences().isEmpty()) {
             return "无参考信息";
         }
 

@@ -4,7 +4,7 @@
 <mapper namespace="com.tik.aipushwarningservice.mapper.MonitorMapper">
 
     <!-- 结果映射 -->
-    <resultMap id="BaseResultMap" type="com.tik.aipushwarningservice.mapper.MonitorMapper">
+    <resultMap id="BaseResultMap" type="com.tik.aipushwarningservice.bean.MonitorRecord">
         <id property="id" column="id" jdbcType="BIGINT"/>
         <result property="personId" column="person_id" jdbcType="BIGINT"/>
         <result property="personName" column="person_name" jdbcType="VARCHAR"/>
@@ -37,7 +37,7 @@
     </sql>
 
     <!-- 插入语句 -->
-    <insert id="insert" parameterType="com.tik.aipushwarningservice.mapper.MonitorMapper"
+    <insert id="insert" parameterType="com.tik.aipushwarningservice.bean.MonitorRecord"
             useGeneratedKeys="true" keyProperty="id">
         INSERT INTO monitor_records (
             person_id, person_name, person_id_card, department, position,
@@ -73,7 +73,7 @@
     </insert>
 
     <!-- 更新语句 -->
-    <update id="updateById" parameterType="com.tik.aipushwarningservice.mapper.MonitorMapper">
+    <update id="updateById" parameterType="com.tik.aipushwarningservice.bean.MonitorRecord">
         UPDATE monitor_records
         <set>
             <if test="personName != null">person_name = #{personName},</if>

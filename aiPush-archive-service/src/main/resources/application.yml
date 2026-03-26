@@ -13,8 +13,8 @@ logging:
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
   level:
-    com.example.archive.mapper: debug
-    com.example.archive: info
+    com.tik.aipusharchiveservice.mapper: debug
+    com.tik.aipusharchiveservice: info
     com.alibaba.nacos: info
 
 # 健康检查

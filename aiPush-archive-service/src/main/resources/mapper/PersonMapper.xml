@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.example.archive.mapper.PersonMapper">
+<mapper namespace="com.tik.aipusharchiveservice.mapper.PersonMapper">
 
-    <resultMap id="BaseResultMap" type="com.tik.aipusharchiveservice.mapper.PersonMapper">
+    <resultMap id="BaseResultMap" type="com.tik.aipusharchiveservice.bean.Person">
         <id property="id" column="id" jdbcType="BIGINT"/>
         <result property="name" column="name" jdbcType="VARCHAR"/>
         <result property="idCard" column="id_card" jdbcType="VARCHAR"/>
@@ -19,7 +19,7 @@
         id, name, id_card, department, position, phone, email, create_time, update_time
     </sql>
 
-    <insert id="insert" parameterType="com.tik.aipusharchiveservice.mapper.PersonMapper" useGeneratedKeys="true" keyProperty="id">
+    <insert id="insert" parameterType="com.tik.aipusharchiveservice.bean.Person" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO persons (
             name, id_card, department, position, phone, email, create_time, update_time
         ) VALUES (
@@ -38,7 +38,7 @@
         </foreach>
     </insert>
 
-    <update id="updateById" parameterType="com.tik.aipusharchiveservice.mapper.PersonMapper">
+    <update id="updateById" parameterType="com.tik.aipusharchiveservice.bean.Person">
         UPDATE persons
         <set>
             <if test="name != null">name = #{name},</if>
@@ -68,7 +68,7 @@
         ORDER BY id DESC
     </select>
 
-    <select id="selectByCondition" parameterType="com.tik.aipusharchiveservice.mapper.PersonMapper" resultMap="BaseResultMap">
+    <select id="selectByCondition" parameterType="com.tik.aipusharchiveservice.bean.Person" resultMap="BaseResultMap">
         SELECT <include refid="Base_Column_List"/>
         FROM persons
         <where>

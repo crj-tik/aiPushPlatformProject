@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.5.11</version>
+        <version>3.2.5</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>com.tik</groupId>
@@ -29,13 +29,12 @@
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <!-- 关键版本定义 -->
-        <spring-boot.version>3.2.5</spring-boot.version>
         <spring-cloud.version>2023.0.1</spring-cloud.version>
         <spring-cloud-alibaba.version>2023.0.1.0</spring-cloud-alibaba.version>
         <spring-ai-alibaba.version>1.1.2.0</spring-ai-alibaba.version>
         <mybatis.version>3.5.14</mybatis.version>
         <mybatis-spring.version>3.0.3</mybatis-spring.version>
-        <mysql.version>4.0.33</mysql.version>
+        <mysql.version>8.0.33</mysql.version>
         <lombok.version>1.18.32</lombok.version>
         <pagehelper.version>1.4.7</pagehelper.version>
     </properties>
@@ -69,15 +68,6 @@
 
     <dependencyManagement>
         <dependencies>
-            <!-- Spring Boot 依赖管理 -->
-            <dependency>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-dependencies</artifactId>
-                <version>${spring-boot.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-
             <!-- Spring Cloud 依赖管理 -->
             <dependency>
                 <groupId>org.springframework.cloud</groupId>
@@ -167,7 +157,6 @@
                 <plugin>
                     <groupId>org.springframework.boot</groupId>
                     <artifactId>spring-boot-maven-plugin</artifactId>
-                    <version>${spring-boot.version}</version>
                 </plugin>
 
                 <!-- Maven 编译插件 -->

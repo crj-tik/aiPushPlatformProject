@@ -18,10 +18,6 @@ spring:
             - Path=/archive/**
           filters:
             - StripPrefix=1
-            - name: RequestRateLimiter
-              args:
-                redis-rate-limiter.replenishRate: 10
-                redis-rate-limiter.burstCapacity: 20
 
         # 预警服务路由
         - id: warning-service
@@ -30,10 +26,6 @@ spring:
             - Path=/warning/**
           filters:
             - StripPrefix=1
-            - name: RequestRateLimiter
-              args:
-                redis-rate-limiter.replenishRate: 10
-                redis-rate-limiter.burstCapacity: 20
 
 # 日志配置
 logging:

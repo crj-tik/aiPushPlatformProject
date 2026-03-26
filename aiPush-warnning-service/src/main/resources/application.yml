@@ -22,8 +22,8 @@ feign:
 # 日志配置
 logging:
   level:
-    com.example.warning: debug
-    com.example.warning.feign: debug
+    com.tik.aipushwarningservice: debug
+    com.tik.aipushwarningservice.feign: debug
     com.alibaba.cloud.ai: debug
     com.alibaba.nacos: info
 

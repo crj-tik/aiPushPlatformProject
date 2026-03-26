@@ -1,49 +1,43 @@
 package com.tik.aipushpushservice.utils;
 
+import com.alibaba.cloud.ai.dashscope.embedding.DashScopeEmbeddingOptions;
+import lombok.RequiredArgsConstructor;
+import org.springframework.ai.embedding.EmbeddingModel;
+import org.springframework.ai.embedding.EmbeddingRequest;
+import org.springframework.ai.embedding.EmbeddingResponse;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestTemplate;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @Component
+@RequiredArgsConstructor
 public class EmbeddingUtils {
 
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final EmbeddingModel embeddingModel;
 
-    /**
-     * 调用OpenAI API获取文本向量
-     */
+    @Value("${spring.ai.dashscope.embedding.options.model:text-embedding-v4}")
+    private String embeddingModelName;
+
+    @Value("${vector.dimensions:1536}")
+    private Integer embeddingDimensions;
+
     public float[] getEmbedding(String text) {
-        Map<String, Object> request = new HashMap<>();
-        request.put("input", text);
-        request.put("model", "text-embedding-ada-002");
+        EmbeddingResponse response = embeddingModel.call(new EmbeddingRequest(
+                List.of(text),
+                DashScopeEmbeddingOptions.builder()
+                        .withModel(embeddingModelName)
+                        .withDimensions(embeddingDimensions)
+                        .build()
+        ));
 
-        Map<String, Object> response = restTemplate.postForObject(
-                "https://api.openai.com/v1/embeddings",
-                request,
-                Map.class
-        );
-
-        if (response != null && response.containsKey("data")) {
-            List<Map<String, Object>> data = (List<Map<String, Object>>) response.get("data");
-            if (!data.isEmpty()) {
-                List<Double> embeddingList = (List<Double>) data.get(0).get("embedding");
-                float[] embedding = new float[embeddingList.size()];
-                for (int i = 0; i < embeddingList.size(); i++) {
-                    embedding[i] = embeddingList.get(i).floatValue();
-                }
-                return embedding;
-            }
+        if (response != null && response.getResult() != null) {
+            return response.getResult().getOutput();
         }
 
-        return new float[1536]; // 返回空向量
+        return new float[embeddingDimensions];
     }
 
-    /**
-     * 计算余弦相似度
-     */
     public double cosineSimilarity(float[] vectorA, float[] vectorB) {
         double dotProduct = 0.0;
         double normA = 0.0;

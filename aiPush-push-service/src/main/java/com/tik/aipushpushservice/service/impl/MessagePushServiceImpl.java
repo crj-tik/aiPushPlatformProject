@@ -36,7 +36,7 @@ public class MessagePushServiceImpl implements MessagePushService {
     private final SkillManagerService skillManagerService;
     private final MessageLogMapper messageLogMapper;
     private final WebhookConfig webhookConfig;
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate;
 
     @Value("${vector.top-k:5}")
     private int topK;
@@ -166,8 +166,7 @@ public class MessagePushServiceImpl implements MessagePushService {
             Map<String, Object> response = restTemplate.postForObject(webhookUrl, request, Map.class);
 
             log.info("推送响应: {}", response);
-            return response != null && response.containsKey("errcode") &&
-                    (Integer) response.get("errcode") == 0;
+            return isPushSuccessful(platform, response);
 
         } catch (Exception e) {
             log.error("推送失败", e);
@@ -216,5 +215,20 @@ public class MessagePushServiceImpl implements MessagePushService {
         }
 
         return body;
+    }
+
+    private boolean isPushSuccessful(String platform, Map<String, Object> response) {
+        if (response == null) {
+            return false;
+        }
+
+        return switch (platform.toLowerCase()) {
+            case "wechat", "dingtalk" ->
+                    Integer.valueOf(0).equals(response.get("errcode"));
+            case "feishu" ->
+                    Integer.valueOf(0).equals(response.get("code")) ||
+                            "success".equalsIgnoreCase(String.valueOf(response.get("msg")));
+            default -> false;
+        };
     }
 }

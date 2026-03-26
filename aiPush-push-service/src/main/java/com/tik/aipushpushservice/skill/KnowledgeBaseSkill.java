@@ -15,31 +15,35 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class KnowledgeBaseSkill implements Skill {
 
+    private static final double DEFAULT_MIN_SCORE = 0.6D;
+    private static final int DEFAULT_TOP_K = 5;
+
     private final VectorSearchService vectorSearchService;
 
     @Override
     public boolean match(String message, Map<String, Object> context) {
-        return true;  // 作为默认技能
+        return true;
     }
 
     @Override
     public SkillResult execute(String message, Map<String, Object> context) {
         try {
-            // 执行向量搜索
-            List<Map<String, Object>> results = vectorSearchService.hybridSearch(message, 0.6, 5);
+            List<Map<String, Object>> results = vectorSearchService.hybridSearch(message, DEFAULT_MIN_SCORE, DEFAULT_TOP_K);
 
-            // 构建参考信息
             List<SkillResult.Reference> references = results.stream()
                     .map(result -> SkillResult.Reference.builder()
-                            .title((String) result.get("name"))
-                            .content((String) result.get("description"))
-                            .source((String) result.get("resourceType"))
-                            .score(((Number) result.get("similarity")).doubleValue())
+                            .title(String.valueOf(result.getOrDefault("name", "unknown")))
+                            .content(String.valueOf(result.getOrDefault("description", result.get("content"))))
+                            .source(String.valueOf(result.getOrDefault("resourceType", "vector_store")))
+                            .score(toDouble(result.get("similarity")))
+                            .metadata(result)
                             .build())
                     .collect(Collectors.toList());
 
-            double confidence = results.isEmpty() ? 0 :
-                    ((Number) results.get(0).get("similarity")).doubleValue();
+            double confidence = references.stream()
+                    .mapToDouble(SkillResult.Reference::getScore)
+                    .max()
+                    .orElse(0D);
 
             return SkillResult.builder()
                     .skillName(getName())
@@ -47,13 +51,12 @@ public class KnowledgeBaseSkill implements Skill {
                     .confidence(confidence)
                     .metadata(Map.of("total", results.size()))
                     .build();
-
         } catch (Exception e) {
-            log.error("知识库技能执行失败", e);
+            log.error("Execute knowledge base skill failed", e);
             return SkillResult.builder()
                     .skillName(getName())
                     .references(List.of())
-                    .confidence(Double.valueOf(0))
+                    .confidence(0D)
                     .metadata(Map.of("error", e.getMessage()))
                     .build();
         }
@@ -66,11 +69,15 @@ public class KnowledgeBaseSkill implements Skill {
 
     @Override
     public String getDescription() {
-        return "知识库问答技能";
+        return "Knowledge base retrieval skill";
     }
 
     @Override
     public int getPriority() {
         return 10;
+    }
+
+    private double toDouble(Object value) {
+        return value instanceof Number number ? number.doubleValue() : 0D;
     }
 }

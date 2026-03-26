@@ -1,5 +1,16 @@
 spring:
   ai:
+    dashscope:
+      api-key: ${DASHSCOPE_API_KEY:}
+      chat:
+        options:
+          model: ${DASHSCOPE_CHAT_MODEL:qwen-plus}
+          temperature: ${DASHSCOPE_CHAT_TEMPERATURE:0.7}
+          max-tokens: ${DASHSCOPE_CHAT_MAX_TOKENS:1000}
+      embedding:
+        options:
+          model: ${DASHSCOPE_EMBEDDING_MODEL:text-embedding-v4}
+          dimensions: ${DASHSCOPE_EMBEDDING_DIMENSIONS:1536}
     # 向量存储配置 - Milvus Lite
     vectorstore:
       milvus:
@@ -13,12 +24,6 @@ spring:
         metric-type: COSINE
         # Milvus Lite 会在当前目录生成 milvus.db 文件
 
-    # Embedding 模型配置（统一在这里配置）
-    embedding:
-      options:
-        model: deepseek-embedding  # 或 text-embedding-ada-002
-        dimensions: 1536
-
     # 可选：配置重试和超时
     retry:
       max-attempts: 3
@@ -30,9 +35,9 @@ spring:
   profiles:
     active: dev
   datasource:
-    url: jdbc:mysql://localhost:3306/smart_push?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
-    username: root
-    password: root123456
+    url: ${DB_URL:jdbc:mysql://localhost:3306/smart_push?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:}
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
       connection-test-query: SELECT 1  # MySQL健康检查
@@ -54,7 +59,7 @@ spring:
 
 mybatis:
   mapper-locations: classpath:mapper/*.xml
-  type-aliases-package: com.example.entity
+  type-aliases-package: com.tik.aipushpushservice.bean
   configuration:
     map-underscore-to-camel-case: true
     cache-enabled: true
@@ -62,18 +67,9 @@ mybatis:
     jdbc-type-for-null: NULL
 
 webhook:
-  wechat: ${WECHAT_WEBHOOK:https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=default}
-  feishu: ${FEISHU_WEBHOOK:https://open.feishu.cn/open-apis/bot/v2/hook/default}
-  dingtalk: ${DINGTALK_WEBHOOK:https://oapi.dingtalk.com/robot/send?access_token=default}
-
-ai:
-  openai:
-    api-key: ${OPENAI_API_KEY:sk-default}
-    base-url: https://api.openai.com/v1
-    chat:
-      model: gpt-3.5-turbo
-      temperature: 0.7
-      max-tokens: 1000
+  wechat: ${WECHAT_WEBHOOK:}
+  feishu: ${FEISHU_WEBHOOK:}
+  dingtalk: ${DINGTALK_WEBHOOK:}
 
 vector:
   top-k: 5
@@ -82,8 +78,8 @@ vector:
 
 logging:
   level:
-    com.example: DEBUG
-    com.example.mapper: DEBUG
+    com.tik.aipushpushservice: DEBUG
+    com.tik.aipushpushservice.mapper: DEBUG
 
 # RestTemplate 配置
 rest:

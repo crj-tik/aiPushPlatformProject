@@ -16,8 +16,7 @@
         <result column="target_platform" property="targetPlatform" jdbcType="VARCHAR"/>
         <result column="push_status" property="pushStatus" jdbcType="INTEGER"/>
         <result column="error_message" property="errorMessage" jdbcType="VARCHAR"/>
-        <result column="context" property="context" jdbcType="VARCHAR"
-                typeHandler="com.example.handler.JsonTypeHandler"/>
+        <result column="context" property="context" jdbcType="VARCHAR"/>
         <result column="created_at" property="createdAt" jdbcType="TIMESTAMP"/>
         <result column="updated_at" property="updatedAt" jdbcType="TIMESTAMP"/>
     </resultMap>
@@ -36,7 +35,7 @@
         ) VALUES (
                      #{traceId}, #{userId}, #{userMessage}, #{matchedResourceId}, #{matchedResourceName},
                      #{similarityScore}, #{summary}, #{targetPlatform}, #{pushStatus}, #{errorMessage},
-                     #{context, typeHandler=com.example.handler.JsonTypeHandler}, NOW(), NOW()
+                     #{context}, NOW(), NOW()
                  )
     </insert>
 

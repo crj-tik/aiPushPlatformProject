@@ -5,12 +5,16 @@ import com.tik.aipushpushservice.service.VectorSearchService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.document.Document;
-import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.ai.vectorstore.SearchRequest;
+import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -18,71 +22,44 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class VectorSearchServiceImpl implements VectorSearchService {
 
-    // 只用 VectorStore，不再需要 Mapper 和 EmbeddingModel
     private final VectorStore vectorStore;
 
-    @Value("${vector-search.top-k:5}")
+    @Value("${vector.top-k:5}")
     private int defaultTopK;
 
-    @Value("${vector-search.min-score:0.6}")
+    @Value("${vector.min-score:0.6}")
     private double defaultMinScore;
 
     @Override
     public List<Map<String, Object>> search(String query, int topK) {
-        try {
-            log.info("执行向量搜索, query: {}, topK: {}", query, topK);
+        return doSearch(query, defaultMinScore, topK);
+    }
 
-            // 直接调用 VectorStore，它会自动：
-            // 1. 用配置的 EmbeddingModel 将 query 转为向量
-            // 2. 在 Milvus 中执行相似度搜索
-            // 3. 返回 Document 列表
-            List<Document> documents = vectorStore.similaritySearch(
-                    SearchRequest.builder()
-                            .query(query)
-                            .topK(topK > 0 ? topK : defaultTopK)
-                            .similarityThreshold(defaultMinScore)
-                            .build()
-            );
-
-            // 将 Document 转换为 Map（保持接口兼容）
-            return documents.stream()
-                    .map(this::convertToMap)
-                    .collect(Collectors.toList());
-
-        } catch (Exception e) {
-            log.error("向量搜索失败", e);
-            return new ArrayList<>();
-        }
+    @Override
+    public List<Map<String, Object>> hybridSearch(String query, double minScore, int topK) {
+        return doSearch(query, minScore, topK);
     }
 
     @Override
     public SkillResult getSkillResult(String query, String skillType) {
         try {
-            log.info("获取技能结果, query: {}, skillType: {}", query, skillType);
+            log.info("Search skill result, query: {}, skillType: {}", query, skillType);
 
-            // 执行搜索
-            List<Document> documents = vectorStore.similaritySearch(
-                    SearchRequest.builder()
-                            .query(query)
-                            .topK(defaultTopK)
-                            .similarityThreshold(defaultMinScore)
-                            .build()
-            );
-
-            // 转换为 SkillResult.Reference
-            List<SkillResult.Reference> references = documents.stream()
-                    .map(doc -> SkillResult.Reference.builder()
-                            .title(doc.getMetadata().getOrDefault("title", "未知").toString())
-                            .content(doc.getText())
-                            .source(doc.getMetadata().getOrDefault("source", "vector_store").toString())
-                            .score(doc.getMetadata().containsKey("distance") ?
-                                    1 - (double) doc.getMetadata().get("distance") : 0.8)
-                            .metadata(doc.getMetadata())
+            List<SkillResult.Reference> references = hybridSearch(query, defaultMinScore, defaultTopK)
+                    .stream()
+                    .map(result -> SkillResult.Reference.builder()
+                            .title(String.valueOf(result.getOrDefault("name", "unknown")))
+                            .content(String.valueOf(result.getOrDefault("description", result.get("content"))))
+                            .source(String.valueOf(result.getOrDefault("resourceType", "vector_store")))
+                            .score(toScore(result.get("similarity")))
+                            .metadata(result)
                             .build())
                     .collect(Collectors.toList());
 
-            double confidence = references.isEmpty() ? 0 :
-                    references.stream().mapToDouble(SkillResult.Reference::getScore).max().orElse(0);
+            double confidence = references.stream()
+                    .mapToDouble(SkillResult.Reference::getScore)
+                    .max()
+                    .orElse(0D);
 
             return SkillResult.builder()
                     .skillName(skillType)
@@ -93,13 +70,12 @@ public class VectorSearchServiceImpl implements VectorSearchService {
                             "query", query
                     ))
                     .build();
-
         } catch (Exception e) {
-            log.error("获取技能结果失败", e);
+            log.error("Search skill result failed", e);
             return SkillResult.builder()
                     .skillName(skillType)
-                    .references(new ArrayList<>())
-                    .confidence(Double.valueOf(0))
+                    .references(List.of())
+                    .confidence(0D)
                     .metadata(Map.of("error", e.getMessage()))
                     .build();
         }
@@ -109,28 +85,25 @@ public class VectorSearchServiceImpl implements VectorSearchService {
     public void addResource(String id, String type, String name, String description,
                             List<String> keywords, Map<String, Object> metadata) {
         try {
-            // 构建文档内容
             String content = String.format("类型：%s，名称：%s，描述：%s，关键词：%s",
                     type, name, description, String.join(",", keywords));
 
-            // 构建元数据
-            Map<String, Object> docMetadata = new HashMap<>(metadata);
+            Map<String, Object> docMetadata = new HashMap<>();
+            if (metadata != null) {
+                docMetadata.putAll(metadata);
+            }
             docMetadata.put("id", id);
-            docMetadata.put("resource_type", type);
             docMetadata.put("name", name);
+            docMetadata.put("description", description);
+            docMetadata.put("resourceType", type);
+            docMetadata.put("resource_type", type);
             docMetadata.put("keywords", keywords);
 
-            // 创建 Document
-            Document document = new Document(id, content, docMetadata);
-
-            // 添加到 VectorStore
-            vectorStore.add(List.of(document));
-
-            log.info("向量资源添加成功, id: {}", id);
-
+            vectorStore.add(List.of(new Document(id, content, docMetadata)));
+            log.info("Added vector resource: {}", id);
         } catch (Exception e) {
-            log.error("添加向量资源失败", e);
-            throw new RuntimeException("添加向量资源失败", e);
+            log.error("Add vector resource failed", e);
+            throw new RuntimeException("Add vector resource failed", e);
         }
     }
 
@@ -138,45 +111,91 @@ public class VectorSearchServiceImpl implements VectorSearchService {
     public void batchAddResources(List<Map<String, Object>> resources) {
         try {
             List<Document> documents = new ArrayList<>();
-
             for (Map<String, Object> resource : resources) {
+                String type = String.valueOf(resource.getOrDefault("resourceType",
+                        resource.getOrDefault("resource_type", "vector_store")));
+                String name = String.valueOf(resource.getOrDefault("name", "unknown"));
+                String description = String.valueOf(resource.getOrDefault("description", ""));
+                List<String> keywords = resource.get("keywords") instanceof List<?> list
+                        ? list.stream().map(String::valueOf).toList()
+                        : List.of();
+
                 String content = String.format("类型：%s，名称：%s，描述：%s，关键词：%s",
-                        resource.get("resource_type"),
-                        resource.get("name"),
-                        resource.get("description"),
-                        String.join(",", (List<String>) resource.get("keywords")));
+                        type, name, description, String.join(",", keywords));
+                String id = String.valueOf(resource.getOrDefault("id", UUID.randomUUID().toString()));
 
-                String id = (String) resource.getOrDefault("id", UUID.randomUUID().toString());
+                Map<String, Object> docMetadata = new HashMap<>(resource);
+                docMetadata.put("name", name);
+                docMetadata.put("description", description);
+                docMetadata.put("resourceType", type);
+                docMetadata.put("resource_type", type);
+                docMetadata.put("keywords", keywords);
 
-                Document doc = new Document(id, content, resource);
-                documents.add(doc);
+                documents.add(new Document(id, content, docMetadata));
             }
 
             vectorStore.add(documents);
-            log.info("批量添加向量资源完成, 数量: {}", documents.size());
-
+            log.info("Batch added vector resources: {}", documents.size());
         } catch (Exception e) {
-            log.error("批量添加向量资源失败", e);
-            throw new RuntimeException("批量添加向量资源失败", e);
+            log.error("Batch add vector resources failed", e);
+            throw new RuntimeException("Batch add vector resources failed", e);
         }
     }
 
     @Override
     public void updateWeight(String id, double weight) {
-        // VectorStore 不直接支持更新权重
-        // 可以通过更新元数据实现
-        log.warn("VectorStore 不直接支持更新权重，可通过重新添加文档实现");
+        log.warn("VectorStore does not support direct weight update. id: {}, weight: {}", id, weight);
     }
 
-    /**
-     * 将 Document 转换为 Map（保持接口兼容）
-     */
+    private List<Map<String, Object>> doSearch(String query, double minScore, int topK) {
+        try {
+            log.info("Vector search, query: {}, minScore: {}, topK: {}", query, minScore, topK);
+
+            List<Document> documents = vectorStore.similaritySearch(
+                    SearchRequest.builder()
+                            .query(query)
+                            .topK(topK > 0 ? topK : defaultTopK)
+                            .similarityThreshold(minScore > 0 ? minScore : defaultMinScore)
+                            .build()
+            );
+
+            return documents.stream()
+                    .map(this::convertToMap)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            log.error("Vector search failed", e);
+            return new ArrayList<>();
+        }
+    }
+
     private Map<String, Object> convertToMap(Document doc) {
-        Map<String, Object> result = new HashMap<>();
+        Map<String, Object> result = new HashMap<>(doc.getMetadata());
+        Object resourceType = result.getOrDefault("resourceType",
+                result.getOrDefault("resource_type", "vector_store"));
+        String content = doc.getText();
+        Object description = result.getOrDefault("description", content);
+
         result.put("id", doc.getId());
-        result.put("content", doc.getText());
-        result.put("similarity", doc.getMetadata().getOrDefault("distance", 0));
-        result.putAll(doc.getMetadata());
+        result.put("content", content);
+        result.put("description", description);
+        result.put("resourceType", resourceType);
+        result.put("resource_type", resourceType);
+        result.put("similarity", toScore(result.get("distance")));
         return result;
+    }
+
+    private double toScore(Object value) {
+        if (!(value instanceof Number number)) {
+            return 0D;
+        }
+
+        double raw = number.doubleValue();
+        if (raw < 0D) {
+            return 0D;
+        }
+        if (raw <= 1D) {
+            return raw;
+        }
+        return 1D / (1D + raw);
     }
 }
