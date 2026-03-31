@@ -31,6 +31,7 @@ public class MonitorController {
         RiskAnalysisDTO analysis = analysisService.analyzePersonRisk(
                 request.getPersonId(),
                 request.getPersonName(),
+                request.getPersonIdCard(),
                 request.getDepartment(),
                 request.getPosition(),
                 request.getWorkData()

@@ -1,0 +1,9 @@
+spring:
+  ai:
+    dashscope:
+      api-key: CHANGE_ME
+    retry:
+      max-attempts: 3
+      backoff:
+        initial-interval: 1000
+        multiplier: 2

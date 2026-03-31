@@ -1,0 +1,15 @@
+server:
+  port: 8081
+
+info:
+  app:
+    name: ${spring.application.name}
+    version: 1.0.0
+    description: 人员档案服务
+
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+  level:
+    com.tik.aipusharchiveservice.mapper: debug
+    com.tik.aipusharchiveservice: info

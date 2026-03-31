@@ -14,7 +14,6 @@
     </parent>
 
     <artifactId>aiPush-push-service</artifactId>
-    <version>1.0.0</version>
     <packaging>jar</packaging>
     <name>aiPush-push-service</name>
     <description>智能消息推送服务</description>
@@ -28,6 +27,12 @@
     </properties>
 
     <dependencies>
+        <dependency>
+            <groupId>com.tik</groupId>
+            <artifactId>aiPush-common</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
         <!-- ========== Spring Boot Starters ========== -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

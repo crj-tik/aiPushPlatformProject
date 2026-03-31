@@ -11,7 +11,7 @@ public interface AiAnalysisService {
      * 分析人员风险（同步）
      */
     RiskAnalysisDTO analyzePersonRisk(Long personId, String personName,
-                                      String department, String position,
+                                      String personIdCard, String department, String position,
                                       String workData);
 
     /**

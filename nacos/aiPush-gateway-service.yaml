@@ -1,0 +1,33 @@
+server:
+  port: 8080
+
+spring:
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+      routes:
+        - id: archive-service
+          uri: lb://aiPush-archive-service
+          predicates:
+            - Path=/archive/**
+          filters:
+            - StripPrefix=1
+        - id: warning-service
+          uri: lb://aiPush-warnning-service
+          predicates:
+            - Path=/warning/**
+          filters:
+            - StripPrefix=1
+        - id: push-service
+          uri: lb://aiPush-push-service
+          predicates:
+            - Path=/push/**
+          filters:
+            - StripPrefix=1
+
+logging:
+  level:
+    org.springframework.cloud.gateway: debug

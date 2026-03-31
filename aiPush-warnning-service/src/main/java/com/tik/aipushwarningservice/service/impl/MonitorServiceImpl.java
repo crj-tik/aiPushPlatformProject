@@ -40,7 +40,11 @@ public class MonitorServiceImpl implements MonitorService {
         MonitorRecord record = new MonitorRecord();
         record.setPersonId(analysisDTO.getPersonId());
         record.setPersonName(analysisDTO.getPersonName());
+        record.setPersonIdCard(analysisDTO.getPersonIdCard());
+        record.setDepartment(analysisDTO.getDepartment());
+        record.setPosition(analysisDTO.getPosition());
         record.setAnalysisType(analysisDTO.getAnalysisType());
+        record.setAnalysisContent(analysisDTO.getAnalysisContent());
         record.setAnalysisResult(analysisDTO.getAnalysisResult());
         record.setRiskLevel(analysisDTO.getRiskLevel());
         record.setRiskScore(analysisDTO.getRiskScore());

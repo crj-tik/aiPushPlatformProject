@@ -17,8 +17,8 @@ public class OrderIngestionService {
         ingestionService.ingestDatabaseTable(
                 "orders",                    // 表名
                 "id",                         // 主键
-                Arrays.asList("order_no", "customer_name", "product_details", "amount"), // 内容列
-                Arrays.asList("status", "create_time", "region") // 元数据列
+                Arrays.asList("order_no", "customer_name", "product_name", "total_amount"), // 内容列
+                Arrays.asList("order_status", "created_at", "region") // 元数据列
         );
     }
 }

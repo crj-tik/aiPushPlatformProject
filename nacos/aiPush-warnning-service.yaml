@@ -1,0 +1,33 @@
+server:
+  port: 8082
+
+info:
+  app:
+    name: ${spring.application.name}
+    version: 1.0.0
+    description: 人员预警服务
+
+feign:
+  client:
+    config:
+      default:
+        connectTimeout: 5000
+        readTimeout: 5000
+        loggerLevel: basic
+  circuitbreaker:
+    enabled: true
+
+warning:
+  ai:
+    fast:
+      model: qwen-turbo
+      temperature: 0.3
+    accurate:
+      model: qwen-max
+      temperature: 0.7
+
+logging:
+  level:
+    com.tik.aipushwarningservice: debug
+    com.tik.aipushwarningservice.feign: debug
+    com.alibaba.cloud.ai: debug

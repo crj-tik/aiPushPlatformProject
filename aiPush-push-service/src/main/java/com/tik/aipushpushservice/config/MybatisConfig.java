@@ -1,9 +1,9 @@
 package com.tik.aipushpushservice.config;
 
+import com.tik.aipushpushservice.handler.MapStringObjectTypeHandler;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.mybatis.spring.SqlSessionFactoryBean;
 import org.mybatis.spring.SqlSessionTemplate;
-import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -26,6 +26,7 @@ public class MybatisConfig {
         org.apache.ibatis.session.Configuration configuration = new org.apache.ibatis.session.Configuration();
         configuration.setMapUnderscoreToCamelCase(true);
         configuration.setCacheEnabled(true);
+        configuration.getTypeHandlerRegistry().register(MapStringObjectTypeHandler.class);
         sessionFactory.setConfiguration(configuration);
 
         return sessionFactory.getObject();

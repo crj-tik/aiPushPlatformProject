@@ -6,6 +6,7 @@ import lombok.Data;
 public class AnalyzeRequest {
     private Long personId;
     private String personName;
+    private String personIdCard;
     private String department;
     private String position;
     private String workData;

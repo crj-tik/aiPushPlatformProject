@@ -11,7 +11,6 @@ spring:
         options:
           model: ${DASHSCOPE_EMBEDDING_MODEL:text-embedding-v4}
           dimensions: ${DASHSCOPE_EMBEDDING_DIMENSIONS:1536}
-    # 向量存储配置 - Milvus Lite
     vectorstore:
       milvus:
         client:
@@ -22,9 +21,6 @@ spring:
         embedding-dimension: 1536
         index-type: IVF_FLAT
         metric-type: COSINE
-        # Milvus Lite 会在当前目录生成 milvus.db 文件
-
-    # 可选：配置重试和超时
     retry:
       max-attempts: 3
       backoff:
@@ -35,12 +31,12 @@ spring:
   profiles:
     active: dev
   datasource:
-    url: ${DB_URL:jdbc:mysql://localhost:3306/smart_push?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true}
-    username: ${DB_USERNAME:root}
+    url: ${DB_URL:jdbc:mysql://localhost:3306/aiPush?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true}
+    username: ${DB_USERNAME:aiPushU}
     password: ${DB_PASSWORD:}
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
-      connection-test-query: SELECT 1  # MySQL健康检查
+      connection-test-query: SELECT 1
       minimum-idle: 5
       maximum-pool-size: 20
       connection-timeout: 30000
@@ -56,6 +52,16 @@ spring:
         namespace: public
         group: DEFAULT_GROUP
         refresh-enabled: true
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:127.0.0.1:9092}
+    consumer:
+      group-id: ${KAFKA_PUSH_GROUP_ID:push-alert-summary-group}
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
 
 mybatis:
   mapper-locations: classpath:mapper/*.xml
@@ -81,10 +87,15 @@ logging:
     com.tik.aipushpushservice: DEBUG
     com.tik.aipushpushservice.mapper: DEBUG
 
-# RestTemplate 配置
 rest:
   template:
-    connect-timeout: 5000      # 连接超时 5秒
-    read-timeout: 30000         # 读取超时 30秒
-    max-connections: 100        # 最大连接数
-    max-per-route: 20           # 每路由最大连接数
+    connect-timeout: 5000
+    read-timeout: 30000
+    max-connections: 100
+    max-per-route: 20
+
+app:
+  kafka:
+    topic:
+      alert-push-request: ${ALERT_PUSH_REQUEST_TOPIC:alert-push-request}
+      alert-push-summary: ${ALERT_PUSH_SUMMARY_TOPIC:alert-push-summary}
