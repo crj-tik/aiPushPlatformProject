@@ -1,16 +1,24 @@
 package com.tik.aipusharchiveservice.service;
 
-import com.tik.aipusharchiveservice.bean.Person;
+import com.tik.aipusharchiveservice.service.entity.PersonEntity;
 
 import java.util.List;
 
 public interface PersonService {
-    Person create(Person person);
-    Person update(Person person);
+
+    PersonEntity create(PersonEntity personEntity);
+
+    PersonEntity update(PersonEntity personEntity);
+
     void delete(Long id);
-    Person getById(Long id);
-    List<Person> getAll();
-    List<Person> search(Person condition);
-    List<Person> getByDepartment(String department);
+
+    PersonEntity getById(Long id);
+
+    List<PersonEntity> getAll();
+
+    List<PersonEntity> search(PersonEntity condition);
+
+    List<PersonEntity> getByDepartment(String department);
+
     long getTotalCount();
 }

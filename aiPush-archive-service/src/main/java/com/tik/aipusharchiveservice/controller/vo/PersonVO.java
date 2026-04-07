@@ -1,10 +1,12 @@
-package com.tik.aipusharchiveservice.bean;
+package com.tik.aipusharchiveservice.controller.vo;
 
 import lombok.Data;
+
 import java.time.LocalDateTime;
 
 @Data
-public class Person {
+public class PersonVO {
+
     private Long id;
     private String name;
     private String idCard;

@@ -30,19 +30,25 @@
         <java.version>17</java.version>
     </properties>
     <dependencies>
+        <dependency>
+            <groupId>com.tik</groupId>
+            <artifactId>aiPush-common</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
         <!-- Spring Boot Web -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
 
-        <!-- Nacos 服务发现 -->
+        <!-- Nacos ?????? -->
         <dependency>
             <groupId>com.alibaba.cloud</groupId>
             <artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
         </dependency>
 
-        <!-- Nacos 配置中心 -->
+        <!-- Nacos ?????? -->
         <dependency>
             <groupId>com.alibaba.cloud</groupId>
             <artifactId>spring-cloud-starter-alibaba-nacos-config</artifactId>
@@ -58,6 +64,16 @@
             <groupId>org.mybatis.spring.boot</groupId>
             <artifactId>mybatis-spring-boot-starter</artifactId>
         </dependency>
+        <dependency>
+            <groupId>tk.mybatis</groupId>
+            <artifactId>mapper-spring-boot-starter</artifactId>
+            <version>4.2.3</version>
+        </dependency>
+        <dependency>
+            <groupId>javax.persistence</groupId>
+            <artifactId>javax.persistence-api</artifactId>
+            <version>2.2</version>
+        </dependency>
 
         <dependency>
             <groupId>mysql</groupId>
@@ -71,25 +87,25 @@
             <optional>true</optional>
         </dependency>
 
-        <!-- 分页插件 -->
+        <!-- ?????? -->
         <dependency>
             <groupId>com.github.pagehelper</groupId>
             <artifactId>pagehelper-spring-boot-starter</artifactId>
             <version>1.4.7</version>
         </dependency>
-        <!-- Spring AI Alibaba (仅monitor模块需要，archive模块如不需要可移除) -->
+        <!-- Spring AI Alibaba (??onitor????????archive??????????????) -->
         <dependency>
             <groupId>com.alibaba.cloud.ai</groupId>
             <artifactId>spring-ai-alibaba-starter-dashscope</artifactId>
             <version>1.1.2.0</version>
         </dependency>
-        <!-- 如果你需要用到 agent 框架等功能，还需要添加： -->
+        <!-- ???????????agent ?????????????????? -->
         <dependency>
             <groupId>com.alibaba.cloud.ai</groupId>
             <artifactId>spring-ai-alibaba-agent-framework</artifactId>
             <version>1.1.2.0</version>
         </dependency>
-        <!-- ========== 测试依赖 ========== -->
+        <!-- ========== ?????? ========== -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
@@ -102,21 +118,21 @@
             </exclusions>
         </dependency>
 
-        <!-- Reactor Test (用于响应式测试) -->
+        <!-- Reactor Test (??????????? -->
         <dependency>
             <groupId>io.projectreactor</groupId>
             <artifactId>reactor-test</artifactId>
             <scope>test</scope>
         </dependency>
 
-        <!-- WireMock (用于模拟外部服务) -->
+        <!-- WireMock (????????????) -->
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-contract-stub-runner</artifactId>
             <scope>test</scope>
         </dependency>
 
-        <!-- 断言库 -->
+        <!-- ?????-->
         <dependency>
             <groupId>org.assertj</groupId>
             <artifactId>assertj-core</artifactId>

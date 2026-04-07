@@ -1,23 +1,20 @@
 server:
   port: 8081
 
-# 服务元数据
 info:
   app:
     name: ${spring.application.name}
     version: 1.0.0
     description: 人员档案服务
 
-# 日志配置
 logging:
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
   level:
-    com.tik.aipusharchiveservice.mapper: debug
+    com.tik.aipusharchiveservice.dal.mapper: debug
     com.tik.aipusharchiveservice: info
     com.alibaba.nacos: info
 
-# 健康检查
 management:
   endpoints:
     web:
@@ -28,8 +25,12 @@ management:
       show-details: always
 
 pagehelper:
-  helper-dialect: mysql  # 数据库方言
-  reasonable: true            # 分页合理化（页码<=0 时查询第一页，页码>总页数时查询最后一页）
-  support-methods-arguments: true  # 支持通过 Mapper 接口参数传递分页参数
-  params: count=countSql       # 从参数中获取 count 查询的 SQL
-  auto-runtime-dialect: true   # 自动识别数据库方言（多数据源时建议开启）
+  helper-dialect: mysql
+  reasonable: true
+  support-methods-arguments: true
+  params: count=countSql
+  auto-runtime-dialect: true
+
+mybatis:
+  configuration:
+    map-underscore-to-camel-case: true
